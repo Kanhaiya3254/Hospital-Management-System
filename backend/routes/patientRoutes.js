@@ -1,25 +1,26 @@
+const express = require("express");
+const router = express.Router();
 const db = require("../db");
-const verifyToken = require("../middleware/authMiddleware");
+const verifyToken = require("../middleware/verifyToken");
 
-module.exports = (req, res) => {
-  const url = req.url;
-  const method = req.method;
+router.get("/", verifyToken, (req, res) => {
+  db.query("SELECT * FROM patients", (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json(result);
+  });
+});
 
-  // GET ALL PATIENTS (Protected)
-  if (url === "/patients" && method === "GET") {
-    if (!verifyToken(req, res)) return true;
+router.post("/", verifyToken, (req, res) => {
+  const { name, age, problem } = req.body;
 
-    db.query("SELECT * FROM patients", (err, result) => {
-      if (err) {
-        res.writeHead(500);
-        res.end(JSON.stringify({ message: "DB Error" }));
-        return;
-      }
-      res.end(JSON.stringify(result));
-    });
+  db.query(
+    "INSERT INTO patients (name, age, problem) VALUES (?, ?, ?)",
+    [name, age, problem],
+    (err, result) => {
+      if (err) return res.status(500).json(err);
+      res.json({ message: "Patient Added" });
+    }
+  );
+});
 
-    return true;
-  }
-
-  return false;
-};
+module.exports = router;

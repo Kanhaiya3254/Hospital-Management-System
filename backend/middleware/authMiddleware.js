@@ -1,26 +1,22 @@
 const jwt = require("jsonwebtoken");
-const SECRET = "hospital_secret_key";
+require('dotenv').config();
 
-function verifyToken(req, res) {
-  const authHeader = req.headers.authorization;
-
+module.exports = (req, res) => {
+  const authHeader = req.headers["authorization"];
   if (!authHeader) {
-    res.writeHead(403, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "No Token Provided" }));
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "No token" }));
     return false;
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, SECRET);
-    req.user = decoded; // user info future use ke liye
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
     return true;
-  } catch (err) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "Invalid Token" }));
+  } catch {
+    res.writeHead(403, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "Invalid token" }));
     return false;
   }
-}
-
-module.exports = verifyToken;
+};

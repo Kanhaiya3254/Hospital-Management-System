@@ -1,60 +1,37 @@
-let doctors = [
-  { id: 1, name: "Dr. Sharma", specialization: "Cardiologist" }
-];
-let doctorId = 2;
+const express = require("express");
+const router = express.Router();
+const db = require("../db");
 
-module.exports = (req, res) => {
-  const url = req.url;
-  const method = req.method;
+// Get all doctors
+router.get("/", (req, res) => {
+  db.query("SELECT * FROM doctors", (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    res.json(result);
+  });
+});
 
-  // GET All
-  if (url === "/doctors" && method === "GET") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(doctors));
-    return true;
+// Add doctor
+router.post("/", (req, res) => {
+  const { name, specialization } = req.body;
+
+  if (!name || !specialization) {
+    return res.status(400).json({ error: "All fields required" });
   }
 
-  // POST
-  if (url === "/doctors" && method === "POST") {
-    let body = "";
-    req.on("data", chunk => body += chunk);
-    req.on("end", () => {
-      const data = JSON.parse(body);
-      const newDoctor = { id: doctorId++, ...data };
-      doctors.push(newDoctor);
-
-      res.writeHead(201, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(newDoctor));
-    });
-    return true;
-  }
-
-  // PUT
-  if (url.startsWith("/doctors/") && method === "PUT") {
-    const id = parseInt(url.split("/")[2]);
-    let body = "";
-    req.on("data", chunk => body += chunk);
-    req.on("end", () => {
-      const data = JSON.parse(body);
-      const doctor = doctors.find(d => d.id === id);
-      if (!doctor) {
-        res.writeHead(404);
-        res.end(JSON.stringify({ message: "Doctor not found" }));
-        return;
+  db.query(
+    "INSERT INTO doctors (name, specialization) VALUES (?, ?)",
+    [name, specialization],
+    (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ error: "Insert failed" });
       }
-      Object.assign(doctor, data);
-      res.end(JSON.stringify(doctor));
-    });
-    return true;
-  }
+      res.json({ message: "Doctor added successfully" });
+    }
+  );
+});
 
-  // DELETE
-  if (url.startsWith("/doctors/") && method === "DELETE") {
-    const id = parseInt(url.split("/")[2]);
-    doctors = doctors.filter(d => d.id !== id);
-    res.end(JSON.stringify({ message: "Doctor deleted" }));
-    return true;
-  }
-
-  return false;
-};
+module.exports = router;

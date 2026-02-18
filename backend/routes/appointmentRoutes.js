@@ -1,43 +1,43 @@
+const express = require("express");
+const router = express.Router();
 const db = require("../db");
-const verifyToken = require("../middleware/verifyToken");
 
-module.exports = (req, res) => {
-  const url = req.url;
-  const method = req.method;
+// Get all appointments
+router.get("/", (req, res) => {
+  const sql = `
+    SELECT appointments.id, patients.name AS patient, doctors.name AS doctor, appointments.date
+    FROM appointments
+    JOIN patients ON appointments.patient_id = patients.id
+    JOIN doctors ON appointments.doctor_id = doctors.id
+  `;
 
-  // GET Appointments
-  if (url === "/appointments" && method === "GET") {
-    if (!verifyToken(req, res)) return true;
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    res.json(result);
+  });
+});
 
-    db.query(
-      "SELECT a.id, p.name AS patient_name, d.name AS doctor_name, a.date FROM appointments a JOIN patients p ON a.patient_id = p.id JOIN doctors d ON a.doctor_id = d.id",
-      (err, result) => {
-        if (err) return res.end(JSON.stringify({ message: "DB Error" }));
-        res.end(JSON.stringify(result));
-      }
-    );
-    return true;
+// Add appointment
+router.post("/", (req, res) => {
+  const { patient_id, doctor_id, date } = req.body;
+
+  if (!patient_id || !doctor_id || !date) {
+    return res.status(400).json({ error: "All fields required" });
   }
 
-  // POST Add Appointment
-  if (url === "/appointments" && method === "POST") {
-    if (!verifyToken(req, res)) return true;
+  const sql =
+    "INSERT INTO appointments (patient_id, doctor_id, date) VALUES (?, ?, ?)";
 
-    let body = "";
-    req.on("data", chunk => body += chunk);
-    req.on("end", () => {
-      const { patient_id, doctor_id, date } = JSON.parse(body);
-      db.query(
-        "INSERT INTO appointments (patient_id, doctor_id, date) VALUES (?, ?, ?)",
-        [patient_id, doctor_id, date],
-        (err) => {
-          if (err) return res.end(JSON.stringify({ message: "DB Error" }));
-          res.end(JSON.stringify({ message: "Appointment Added" }));
-        }
-      );
-    });
-    return true;
-  }
+  db.query(sql, [patient_id, doctor_id, date], (err, result) => {
+    if (err) {
+      console.log("Appointment Insert Error:", err);
+      return res.status(500).json({ error: "Insert failed" });
+    }
+    res.json({ message: "Appointment added successfully" });
+  });
+});
 
-  return false;
-};
+module.exports = router;

@@ -1,25 +1,24 @@
 const jwt = require("jsonwebtoken");
-const SECRET = "hospital_secret_key";
 
-function verifyToken(req, res) {
-  const authHeader = req.headers.authorization; // frontend se aayega: Bearer <token>
+module.exports = (req, res, next) => {
+
+  const authHeader = req.headers["authorization"];
 
   if (!authHeader) {
-    res.writeHead(403);
-    res.end(JSON.stringify({ message: "No Token" }));
-    return false;
+    return res.status(401).json({ message: "Access Denied. No Token" });
   }
 
   const token = authHeader.split(" ")[1];
 
-  try {
-    req.user = jwt.verify(token, SECRET); // decoded info store
-    return true;
-  } catch (err) {
-    res.writeHead(401);
-    res.end(JSON.stringify({ message: "Invalid Token" }));
-    return false;
+  if (!token) {
+    return res.status(401).json({ message: "Invalid Token Format" });
   }
-}
 
-module.exports = verifyToken;
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified;
+    next();
+  } catch (err) {
+    return res.status(403).json({ message: "Token Invalid" });
+  }
+};
