@@ -1,25 +1,51 @@
 import React, { useEffect, useState } from "react";
-import { getDashboard } from "../api";
+import {
+  getPatients,
+  getDoctors,
+  getAppointments,
+} from "../api";
 
-const Dashboard = ({ token }) => {
-  const [data, setData] = useState({ patients:0, doctors:0, appointments:0 });
+function Dashboard() {
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const res = await getDashboard(token);
-      setData(res);
-    };
     fetchData();
-  }, [token]);
+  }, []);
+
+  const fetchData = async () => {
+    const pat = await getPatients();
+    const doc = await getDoctors();
+    const appt = await getAppointments();
+
+    setPatients(pat.data);
+    setDoctors(doc.data);
+    setAppointments(appt.data);
+  };
 
   return (
-    <div>
-      <h2>Dashboard</h2>
-      <p>Total Patients: {data.patients}</p>
-      <p>Total Doctors: {data.doctors}</p>
-      <p>Total Appointments: {data.appointments}</p>
+    <div className="dashboard">
+      <h2>Dashboard Overview</h2>
+
+      <div className="cards">
+        <div className="card">
+          <h3>Total Patients</h3>
+          <p>{patients.length}</p>
+        </div>
+
+        <div className="card">
+          <h3>Total Doctors</h3>
+          <p>{doctors.length}</p>
+        </div>
+
+        <div className="card">
+          <h3>Total Appointments</h3>
+          <p>{appointments.length}</p>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 export default Dashboard;

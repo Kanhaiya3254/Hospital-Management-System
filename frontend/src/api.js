@@ -1,59 +1,34 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000";
+const API = axios.create({
+  baseURL: "http://localhost:5000/api",
+});
 
-const token = localStorage.getItem("token");
+// 🔐 Automatically attach token in every request
+API.interceptors.request.use((req) => {
+  const token = localStorage.getItem("token");
 
-export const loginUser = async (email, password) => {
-  const res = await axios.post(`${API_URL}/login`, { email, password });
-  return res.data;
-};
+  if (token) {
+    req.headers.Authorization = token;
+  }
 
-export const getPatients = async () => {
-  const res = await axios.get(`${API_URL}/patients`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
+  return req;
+});
 
-export const getDoctors = async () => {
-  const res = await axios.get(`${API_URL}/doctors`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
+// ================= AUTH =================
+export const loginUser = (data) => API.post("/login", data);
 
-export const getAppointments = async () => {
-  const res = await axios.get(`${API_URL}/appointments`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
+// ================= PATIENT =================
+export const getPatients = () => API.get("/patients");
+export const addPatient = (data) => API.post("/patients", data);
 
-export const addPatient = async (data) => {
-  const res = await axios.post(`${API_URL}/patients`, data, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
+// ================= DOCTOR =================
+export const getDoctors = () => API.get("/doctors");
+export const addDoctor = (data) => API.post("/doctors", data);
 
-export const addDoctor = async (data) => {
-  const res = await axios.post(`${API_URL}/doctors`, data, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
+// ================= APPOINTMENT =================
+export const getAppointments = () => API.get("/appointments");
+export const addAppointment = (data) =>
+  API.post("/appointments", data);
 
-export const addAppointment = async (data) => {
-  const res = await axios.post(`${API_URL}/appointments`, data, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const getDashboard = async () => {
-  const res = await axios.get(`${API_URL}/dashboard`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
+export default API;

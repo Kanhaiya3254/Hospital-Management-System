@@ -1,33 +1,56 @@
 import React, { useState } from "react";
 import { loginUser } from "../api";
 
-const Login = ({ setToken }) => {
-  const [email, setEmail] = useState("");
+function Login({ setToken }) {
+
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await loginUser(email, password);
-      localStorage.setItem("token", res.token);
-      setToken(res.token);
-    } catch (err) {
-      setError(err.response?.data?.message || "Login Failed");
+      const res = await loginUser({
+        username,
+        password,
+      });
+
+      // ✅ Save token properly
+      localStorage.setItem("token", res.data.token);
+
+      // ✅ Update App state
+      setToken(res.data.token);
+
+    } catch (error) {
+      alert("Invalid Credentials");
     }
   };
 
   return (
-    <div className="login">
-      <h2>Login</h2>
+    <div style={{ padding: "50px" }}>
+      <h2>Admin Login</h2>
+
       <form onSubmit={handleLogin}>
-        <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required/>
-        <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required/>
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <br /><br />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <br /><br />
+
         <button type="submit">Login</button>
       </form>
-      {error && <p className="error">{error}</p>}
     </div>
   );
-};
+}
 
 export default Login;
